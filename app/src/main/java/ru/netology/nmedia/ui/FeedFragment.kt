@@ -9,24 +9,20 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.paging.LoadState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import ru.netology.nmedia.R
 import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostsAdapter
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.databinding.FragmentFeedBinding
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.viewmodel.PostViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class FeedFragment : Fragment() {
-    @Inject
-    lateinit var repository: PostRepository
-
     @Inject
     lateinit var auth: AppAuth
     private val viewModel: PostViewModel by viewModels(
@@ -67,17 +63,8 @@ class FeedFragment : Fragment() {
         })
         binding.list.adapter = adapter
 
-        lifecycleScope.launchWhenCreated {
-            viewModel.data.collectLatest(adapter::submitData)
-        }
-
-        lifecycleScope.launchWhenCreated {
-            adapter.loadStateFlow.collectLatest { state ->
-                    binding.swiperefresh.isRefreshing =
-                        state.refresh is LoadState.Loading ||
-                        state.prepend is LoadState.Loading ||
-                        state.append is LoadState.Loading
-                }
+        lifecycleScope.launch {
+            viewModel.data.collectLatest { adapter.submitData(it) }
         }
 
         binding.swiperefresh.setOnRefreshListener(adapter::refresh)
