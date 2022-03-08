@@ -38,13 +38,9 @@ class PostViewModel @Inject constructor(
     private val repository: PostRepository,
     auth: AppAuth,
 ) : ViewModel() {
-    private val cached = repository
-        .data
-        .cachedIn(viewModelScope)
-
     val data: Flow<PagingData<Post>> = auth.authStateFlow
         .flatMapLatest { (myId, _) ->
-            cached.map { pagingData ->
+            repository.data.map { pagingData ->
                 pagingData.map { post ->
                     post.copy(ownedByMe = post.authorId == myId)
                 }
