@@ -38,18 +38,10 @@ class PostViewModel @Inject constructor(
     private val repository: PostRepository,
     auth: AppAuth,
 ) : ViewModel() {
-    private val cached = repository
-        .data
-        .cachedIn(viewModelScope)
-
     val data: Flow<PagingData<Post>> = auth.authStateFlow
-        .flatMapLatest { (myId, _) ->
-            cached.map { pagingData ->
-                pagingData.map { post ->
-                    post.copy(ownedByMe = post.authorId == myId)
-                }
-            }
-        }
+        .flatMapLatest {
+            repository.data
+        }.cachedIn(viewModelScope)
 
     private val _dataState = MutableLiveData<FeedModelState>()
     val dataState: LiveData<FeedModelState>
